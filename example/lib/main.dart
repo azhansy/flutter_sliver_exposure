@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({Key? key, this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -33,7 +33,7 @@ class MyHomePage extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
-  final String title;
+  final String? title;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -46,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text(widget.title!),
       ),
       body: Center(
         child: Column(
@@ -94,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
 class StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
-  StickyTabBarDelegate({@required this.child});
+  StickyTabBarDelegate({required this.child});
 
   @override
   Widget build(
@@ -121,7 +121,7 @@ class ExposureDemo extends StatelessWidget {
   GlobalKey<_ExposureTipState> globalKey = GlobalKey();
   ScrollController _scrollController = ScrollController();
 
-  ExposureDemo({Key key, this.isList, this.axis}) : super(key: key);
+  ExposureDemo({Key? key, required this.isList, required this.axis}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +151,7 @@ class ExposureDemo extends StatelessWidget {
           ),
           SliverList(
             delegate:
-            SliverChildBuilderDelegate(_onItemBuilder, childCount: 50),
+                SliverChildBuilderDelegate(_onItemBuilder, childCount: 50),
           ),
           SliverToBoxAdapter(
             child: Text('mid'),
@@ -192,6 +192,11 @@ class ExposureDemo extends StatelessWidget {
       scrollDirection: axis,
       scrollCallback:
           (List<IndexRange> range, ScrollNotification scrollNotification) {
+        print('rang=${range.length},');
+        if (range.isNotEmpty) {
+          globalKey.currentState!
+              .updateExposureTip(range[0].firstIndex, range[0].lastIndex);
+        }
       },
       exposureEndCallback: (ExposureEndIndex index) {
         print(
@@ -203,6 +208,10 @@ class ExposureDemo extends StatelessWidget {
       },
       exposureReferee: (ExposureStartIndex index, double paintExtent,
           double maxPaintExtent) {
+
+        print(
+            'dashu exposureReferee $paintExtent,$maxPaintExtent');
+
         return paintExtent == maxPaintExtent;
       },
     );
@@ -232,9 +241,9 @@ class ExposureDemo extends StatelessWidget {
 }
 
 class ExposureTip extends StatefulWidget {
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
 
-  const ExposureTip({Key key, this.scrollController}) : super(key: key);
+  const ExposureTip({Key? key, this.scrollController}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -243,22 +252,22 @@ class ExposureTip extends StatefulWidget {
 }
 
 class _ExposureTipState extends State<ExposureTip> {
-  int first;
-  int last;
+  int? first;
+  int? last;
   List<int> export = [];
   ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
+    WidgetsBinding.instance!.addPostFrameCallback((_) {});
   }
 
   void updateExposureTip(int first, int last) {
     assert(first != null && last != null);
     if (first < last) {
       for (int i = first; i <= last; i++) {
-        if (this.first == null || i < this.first || i > this.last) {
+        if (this.first == null || i < this.first! || i > this.last!) {
           export.add(i);
         }
       }

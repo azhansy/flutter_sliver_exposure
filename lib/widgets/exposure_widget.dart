@@ -29,16 +29,16 @@ typedef ExposureReferee = bool Function(
     ExposureStartIndex index, double paintExtent, double maxPaintExtent);
 
 class SingleExposureListener extends StatefulWidget {
-  final SingleScrollCallback scrollCallback;
-  final ExposureReferee exposureReferee;
-  final ExposureStartCallback exposureStartCallback;
-  final ExposureEndCallback exposureEndCallback;
-  final Widget child;
+  final SingleScrollCallback? scrollCallback;
+  final ExposureReferee? exposureReferee;
+  final ExposureStartCallback? exposureStartCallback;
+  final ExposureEndCallback? exposureEndCallback;
+  final Widget? child;
   final Axis scrollDirection;
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
 
   const SingleExposureListener(
-      {Key key,
+      {Key? key,
       this.scrollCallback,
       this.exposureReferee,
       this.exposureStartCallback,
@@ -56,29 +56,29 @@ class SingleExposureListener extends StatefulWidget {
 
 class _SingleExposureListener extends State<SingleExposureListener>
     with _ExposureMixin {
-  int _firstExposureIndex;
-  int _lastExposureIndex;
+  int? _firstExposureIndex;
+  late int _lastExposureIndex;
   Map<int, int> visibleMap = {};
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.scrollController.position.didStartScroll();
-      widget.scrollController.position.didEndScroll();
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      widget.scrollController!.position.didStartScroll();
+      widget.scrollController!.position.didEndScroll();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return NotificationListener(
-        child: widget.child, onNotification: _onNotification);
+        child: widget.child!, onNotification: _onNotification);
   }
 
   bool _onNotification(ScrollNotification notice) {
     final int exposureTime = DateTime.now().millisecondsSinceEpoch;
-    final element =
-        findElementByType<SliverMultiBoxAdaptorElement>(notice.context);
+    final element = findElementByType<SliverMultiBoxAdaptorElement>(
+        notice.context as Element?);
     if (element != null) {
       final indexRange = _visitSliverMultiBoxAdaptorElement(
           element,
@@ -88,8 +88,10 @@ class _SingleExposureListener extends State<SingleExposureListener>
           widget.exposureReferee,
           exposureTime,
           0);
-      widget.scrollCallback?.call(indexRange, notice);
-      _dispatchExposureEvent(indexRange, exposureTime);
+      if (null != indexRange) {
+        widget.scrollCallback?.call(indexRange, notice);
+        _dispatchExposureEvent(indexRange, exposureTime);
+      }
     }
     return false;
   }
@@ -98,7 +100,7 @@ class _SingleExposureListener extends State<SingleExposureListener>
     if (indexRange.firstIndex <= indexRange.lastIndex) {
       for (int i = indexRange.firstIndex; i <= indexRange.lastIndex; i++) {
         if (_firstExposureIndex == null ||
-            i < _firstExposureIndex ||
+            i < _firstExposureIndex! ||
             i > _lastExposureIndex) {
           widget.exposureStartCallback
               ?.call(ExposureStartIndex(0, i, exposureTime));
@@ -122,14 +124,14 @@ class _SingleExposureListener extends State<SingleExposureListener>
   }
 
   void _dispatchExposureEnd(int exposureTime,
-      {int firstIndex, int lastIndex, bool dispose = false}) {
+      {int? firstIndex, int? lastIndex, bool dispose = false}) {
     if (_firstExposureIndex != null)
-      for (int i = _firstExposureIndex; i <= _lastExposureIndex; i++) {
+      for (int i = _firstExposureIndex!; i <= _lastExposureIndex; i++) {
         if (dispose ||
-            firstIndex > lastIndex ||
+            firstIndex! > lastIndex! ||
             i < firstIndex ||
             i > lastIndex) {
-          final startTime = visibleMap.remove(i);
+          final startTime = visibleMap.remove(i)!;
           widget.exposureEndCallback?.call(
               ExposureEndIndex(0, i, exposureTime, exposureTime - startTime));
         }
@@ -138,16 +140,16 @@ class _SingleExposureListener extends State<SingleExposureListener>
 }
 
 class SliverExposureListener extends StatefulWidget {
-  final SliverScrollCallback scrollCallback;
-  final ExposureReferee exposureReferee;
-  final ExposureStartCallback exposureStartCallback;
-  final ExposureEndCallback exposureEndCallback;
-  final Widget child;
+  final SliverScrollCallback? scrollCallback;
+  final ExposureReferee? exposureReferee;
+  final ExposureStartCallback? exposureStartCallback;
+  final ExposureEndCallback? exposureEndCallback;
+  final Widget? child;
   final Axis scrollDirection;
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
 
   const SliverExposureListener(
-      {Key key,
+      {Key? key,
       this.scrollCallback,
       this.exposureReferee,
       this.child,
@@ -186,29 +188,29 @@ class _Point {
 class _SliverExposureListenerState extends State<SliverExposureListener>
     with _ExposureMixin {
   Set<_Point> visibleSet = Set();
-  Set<_Point> oldSet;
+  Set<_Point>? oldSet;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.scrollController.position.didStartScroll();
-      widget.scrollController.position.didEndScroll();
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      widget.scrollController!.position.didStartScroll();
+      widget.scrollController!.position.didEndScroll();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return NotificationListener(
-        child: widget.child, onNotification: _onNotification);
+        child: widget.child!, onNotification: _onNotification);
   }
 
   bool _onNotification(ScrollNotification notice) {
     // 记录当前曝光时间，可作为开始曝光元素的曝光开始时间点和结束曝光节点的结束曝光时间点
     final int exposureTime = DateTime.now().millisecondsSinceEpoch;
     // 查找对应的Viewport节点MultiChildRenderObjectElement
-    final viewPortElement =
-        findElementByType<MultiChildRenderObjectElement>(notice.context);
+    final  viewPortElement = findElementByType<MultiChildRenderObjectElement>(
+        notice.context as Element?);
     assert(viewPortElement != null);
     // 定义parentIndex 用于确定外层节点位置，也作为SliverList或SlierGrid的parentIndex
     int parentIndex = 0;
@@ -218,9 +220,9 @@ class _SliverExposureListenerState extends State<SliverExposureListener>
     // 每个节点前面所有节点所占的范围，用于SliverList或SliverGrid确定
     // 自身在viewport中的可见区域
     double totalScrollExtent = 0;
-    viewPortElement.visitChildElements((itemElement) {
+    viewPortElement!.visitChildElements((itemElement) {
       assert(itemElement.renderObject is RenderSliver);
-      final geometry = (itemElement.renderObject as RenderSliver).geometry;
+      final geometry = (itemElement.renderObject as RenderSliver).geometry!;
       // 判断当前子节点时是否可见，不可见无须处理曝光
       if (geometry.visible) {
         if (itemElement is SliverMultiBoxAdaptorElement) {
@@ -233,12 +235,15 @@ class _SliverExposureListenerState extends State<SliverExposureListener>
               widget.exposureReferee,
               exposureTime,
               parentIndex);
+          if (indexRange == null) {
+            return;
+          }
           indexRanges.add(indexRange);
           _dispatchExposureStartEventByIndexRange(indexRange, exposureTime);
         } else {
           // 单一RenderSlider直接判断外层节点是否曝光即可
           bool isExposure = widget.exposureReferee != null
-              ? widget.exposureReferee(
+              ? widget.exposureReferee!(
                   ExposureStartIndex(parentIndex, 0, exposureTime),
                   geometry.paintExtent,
                   geometry.maxPaintExtent)
@@ -278,14 +283,14 @@ class _SliverExposureListenerState extends State<SliverExposureListener>
       widget.exposureStartCallback
           ?.call(ExposureStartIndex(parentIndex, itemIndex, exposureTime));
     } else {
-      oldSet.remove(point);
+      oldSet!.remove(point);
     }
   }
 
-  void _dispatchExposureEndEvent(Set<_Point> set, int exposureTime) {
+  void _dispatchExposureEndEvent(Set<_Point>? set, int exposureTime) {
     if (widget.exposureEndCallback == null) return;
-    set.forEach((item) {
-      widget.exposureEndCallback(ExposureEndIndex(item.parentIndex,
+    set!.forEach((item) {
+      widget.exposureEndCallback!(ExposureEndIndex(item.parentIndex,
           item.itemIndex, exposureTime, exposureTime - item.time));
     });
     if (visibleSet == set) {
@@ -304,40 +309,39 @@ class _SliverExposureListenerState extends State<SliverExposureListener>
 }
 
 mixin _ExposureMixin {
-  IndexRange _visitSliverMultiBoxAdaptorElement(
-      SliverMultiBoxAdaptorElement sliverMultiBoxAdaptorElement,
+  IndexRange? _visitSliverMultiBoxAdaptorElement(
+      SliverMultiBoxAdaptorElement? sliverMultiBoxAdaptorElement,
       double portF,
       double portE,
       Axis axis,
-      ExposureReferee exposureReferee,
+      ExposureReferee? exposureReferee,
       int exposureTime,
       int parentIndex) {
     if (sliverMultiBoxAdaptorElement == null) return null;
     int firstIndex = sliverMultiBoxAdaptorElement.childCount;
-    assert(firstIndex != null);
     int endIndex = -1;
     void onVisitChildren(Element element) {
-      final SliverMultiBoxAdaptorParentData parentData =
-          element?.renderObject?.parentData;
+      final SliverMultiBoxAdaptorParentData? parentData =
+          element.renderObject?.parentData as SliverMultiBoxAdaptorParentData?;
       if (parentData != null) {
-        double boundF = parentData.layoutOffset;
+        double boundF = parentData.layoutOffset!;
         double itemLength = axis == Axis.vertical
-            ? element.renderObject.paintBounds.height
-            : element.renderObject.paintBounds.width;
+            ? element.renderObject!.paintBounds.height
+            : element.renderObject!.paintBounds.width;
         double boundE = itemLength + boundF;
         double paintExtent = max(min(boundE, portE) - max(boundF, portF), 0);
         double maxPaintExtent = itemLength;
         bool isExposure = exposureReferee != null
             ? exposureReferee(
-                ExposureStartIndex(parentIndex, parentData.index, exposureTime),
+                ExposureStartIndex(parentIndex, parentData.index!, exposureTime),
                 paintExtent,
                 maxPaintExtent)
             : paintExtent == maxPaintExtent;
 
         if (isExposure) {
-          firstIndex = min(firstIndex, parentData.index);
+          firstIndex = min(firstIndex, parentData.index!);
 
-          endIndex = max(endIndex, parentData.index);
+          endIndex = max(endIndex, parentData.index!);
         }
       }
     }
@@ -346,12 +350,12 @@ mixin _ExposureMixin {
     return IndexRange(parentIndex, firstIndex, endIndex);
   }
 
-  T findElementByType<T extends Element>(Element element) {
+  T? findElementByType<T extends Element>(Element? element) {
     if (element is T) {
       return element;
     }
-    T target;
-    element.visitChildElements((child) {
+    T? target;
+    element!.visitChildElements((child) {
       target ??= findElementByType<T>(child);
     });
     return target;
